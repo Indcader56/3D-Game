@@ -26,7 +26,7 @@ texture_size_x = 64
 texture_size_y = 64
 
 tile_colors = [(255,0,0), (0,0,225),(228,230,168)]
-floor_color = (168, 142, 109)
+floor_color = (158, 132, 99)
 ceiling_color = (249, 244, 206)
 map_color = (255,255,255)
 
@@ -62,7 +62,7 @@ tile_select = 0
 hud = False
 
 #world_data = [[2 if x == 0 or x == world_size_x-1 or y == 0 or y == world_size_y-1 else 0 for x in range(world_size_x)] for y in range(world_size_y)]
-world_data = [[0 for x in range(world_size_x)] for y in range(world_size_y)]
+world_data = [[3 if random.randint(0,4) == 4 else 0 for x in range(world_size_x)] for y in range(world_size_y)]
 
 depth_list = []
 
@@ -201,12 +201,12 @@ while True:
             # Checks if the player goes out of the bounds of the world and fixes their position
             if player_tile_y == 0 and player_local_tile_pos_y < 1:
                 player_y = float(past_player_y)
-            if player_tile_y == world_size_y-1 and player_local_tile_pos_y > 15:
+            if player_tile_y == world_size_y-1 and player_local_tile_pos_y > tile_size_y-1:
                 player_y = float(past_player_y)
 
             if player_tile_x == 0 and player_local_tile_pos_x < 1:
                 player_x = float(past_player_x)
-            if player_tile_x == world_size_x-1 and player_local_tile_pos_x > 15:
+            if player_tile_x == world_size_x-1 and player_local_tile_pos_x > tile_size_x-1:
                 player_x = float(past_player_x)
 
             # Checks if a player has hit the side of a block and fixes their position
@@ -215,7 +215,7 @@ while True:
                     player_y = float(past_player_y)
 
             if not player_tile_y == world_size_y-1:
-                if not world_data[player_tile_y+1][player_tile_x] == 0 and player_local_tile_pos_y > 15:
+                if not world_data[player_tile_y+1][player_tile_x] == 0 and player_local_tile_pos_y > tile_size_y-1:
                     player_y = float(past_player_y)
 
             if not player_tile_x == 0:
@@ -223,7 +223,7 @@ while True:
                     player_x = float(past_player_x)
 
             if not player_tile_x == world_size_x-1:
-                if not world_data[player_tile_y][player_tile_x+1] == 0 and player_local_tile_pos_x > 15:
+                if not world_data[player_tile_y][player_tile_x+1] == 0 and player_local_tile_pos_x > tile_size_x-1:
                     player_x = float(past_player_x)
 
                 
@@ -236,8 +236,8 @@ while True:
     screen.fill((0,0,0))
 
     # Blits the happy background
-    pygame.draw.rect(screen, (0,0,255), (0,0,window_size_x,window_half_y))
-    pygame.draw.rect(screen, (0,255,0), (0,window_half_y,window_size_x,window_size_y))
+    #pygame.draw.rect(screen, (0,0,255), (0,0,window_size_x,window_half_y))
+    #pygame.draw.rect(screen, (0,255,0), (0,window_half_y,window_size_x,window_size_y))
 
     # Blits the gradient background
     """
@@ -245,8 +245,8 @@ while True:
     screen.blit(gradient_floor_surf, (0,window_half_y))
     """
     # Blits the backrooms background
-    #pygame.draw.rect(screen, ceiling_color, (0,0,window_size_x,window_half_y))
-    #pygame.draw.rect(screen, floor_color, (0,window_half_y,window_size_x,window_size_y))
+    pygame.draw.rect(screen, ceiling_color, (0,0,window_size_x,window_half_y))
+    pygame.draw.rect(screen, floor_color, (0,window_half_y,window_size_x,window_size_y))
     
 
     # Raycaster
@@ -273,12 +273,12 @@ while True:
             step_y = 1
 
         if math.sin(d) == 0:
-            delta_y = 999999999999999999999
+            delta_y = 10**21
         else:
             delta_y = abs(tile_size_y/math.sin(d))
 
         if math.cos(d) == 0:
-            delta_x = 999999999999999999999
+            delta_x = 10**21
         else:
             delta_x = abs(tile_size_x/math.cos(d))
 
@@ -374,7 +374,7 @@ while True:
 
             #if line_height < 1200:
             img = get_image(wall_image, slice_index+((tile)*64), 1, 64, 4, line_height/64, None)
-            screen.blit(img, (i*4, (((-line_height)/2) + window_half_y)))
+            screen.blit(img, (i*4, (((-line_height))/2) + window_half_y))
 
 
             # For when we used to draw plain colors
