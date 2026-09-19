@@ -2,6 +2,9 @@ import pygame
 import random
 import math
 
+# Incredibly powerful import, must be commented out when not in use 
+#import antigravity
+
 pygame.init()
 
 window_size_x = 960
@@ -62,7 +65,7 @@ tile_select = 0
 hud = False
 
 #world_data = [[2 if x == 0 or x == world_size_x-1 or y == 0 or y == world_size_y-1 else 0 for x in range(world_size_x)] for y in range(world_size_y)]
-world_data = [[3 if random.randint(0,4) == 4 else 0 for x in range(world_size_x)] for y in range(world_size_y)]
+world_data = [[random.randint(1,3) if random.randint(0,4) == 4 else 0 for x in range(world_size_x)] for y in range(world_size_y)]
 
 depth_list = []
 
@@ -94,6 +97,7 @@ def get_image(sheet, frame, width, height, scale_x, scale_y, color):
 
 	return image.convert_alpha()
 
+floor = pygame.Surface((window_size_x, window_half_y))
 
 while True:
     dt = clock.tick(60)/1000
@@ -154,21 +158,24 @@ while True:
     past_player_x = float(player_x)
     past_player_y = float(player_y)
                 
-    player_dir = dir*(math.pi/180)
+    player_dir = math.radians(dir)
 
     if click_w == True:
         player_x += math.cos(player_dir)*(player_speed*dt)
         player_y += math.sin(player_dir)*(player_speed*dt)
+
     if click_s == True:
         player_x -= math.cos(player_dir)*(player_speed*dt)
         player_y -= math.sin(player_dir)*(player_speed*dt)
+
+                    
     if click_a == True:
         player_x += math.cos(player_dir-(math.pi/2))*(player_speed*dt)
         player_y += math.sin(player_dir-(math.pi/2))*(player_speed*dt)
+
     if click_d == True:
         player_x += math.cos(player_dir+(math.pi/2))*(player_speed*dt)
         player_y += math.sin(player_dir+(math.pi/2))*(player_speed*dt)
-
 
 
     if click_left == True:
@@ -190,6 +197,7 @@ while True:
     if dir < 0:
         dir = 360
 
+# Player collsion 
     if player_tile_x < world_size_y and player_tile_y >= 0:
         if player_tile_x < world_size_x and player_tile_x >= 0:
 
@@ -236,8 +244,8 @@ while True:
     screen.fill((0,0,0))
 
     # Blits the happy background
-    #pygame.draw.rect(screen, (0,0,255), (0,0,window_size_x,window_half_y))
-    #pygame.draw.rect(screen, (0,255,0), (0,window_half_y,window_size_x,window_size_y))
+    pygame.draw.rect(screen, (0,0,255), (0,0,window_size_x,window_half_y))
+    pygame.draw.rect(screen, (0,255,0), (0,window_half_y,window_size_x,window_size_y))
 
     # Blits the gradient background
     """
@@ -245,8 +253,8 @@ while True:
     screen.blit(gradient_floor_surf, (0,window_half_y))
     """
     # Blits the backrooms background
-    pygame.draw.rect(screen, ceiling_color, (0,0,window_size_x,window_half_y))
-    pygame.draw.rect(screen, floor_color, (0,window_half_y,window_size_x,window_size_y))
+    #pygame.draw.rect(screen, ceiling_color, (0,0,window_size_x,window_half_y))
+    #pygame.draw.rect(screen, floor_color, (0,window_half_y,window_size_x,window_size_y))
     
 
     # Raycaster
@@ -350,7 +358,22 @@ while True:
             b += 1
 
         ray_lines.append((ray_x,ray_y))
-        
+
+    # Floor test
+    """
+    for i in range(int(window_half_y/4)):
+        try:
+            d = window_size_y/((2*(i+window_half_y)-window_size_y))
+        except ZeroDivisionError:
+            d = 0
+        #print(d)
+        if not d == 0:
+            #pygame.draw.line(screen, (int(255-(255*(d/window_half_y))),int(255-(255*(d/window_half_y))),0), (0, ((i*4)+window_half_y)), (window_size_x, ((i*4)+window_half_y)), 4)
+            for e in range(int(window_size_x/4)):
+                pygame.draw.rect(floor, (random.randint(50,75),random.randint(200,255),random.randint(100,150)),(e*4 ,int((i*4)), 4,4))
+
+    screen.blit(floor, (0,window_half_y))
+    """
 
     # Draws the 3D world
     for i in range(len(lines)):
@@ -374,11 +397,13 @@ while True:
 
             #if line_height < 1200:
             img = get_image(wall_image, slice_index+((tile)*64), 1, 64, 4, line_height/64, None)
-            screen.blit(img, (i*4, (((-line_height))/2) + window_half_y))
+            screen.blit(img, (i*4, (((-(line_height)))/2) + window_half_y))
 
 
             # For when we used to draw plain colors
             #pygame.draw.line(screen, line_color, (i*4, (-line_height/2) + window_half_y), (i*4, (line_height/2) + window_half_y), 4)
+
+
 
     # Draws the map if the hud is enabled
     if hud == True:
