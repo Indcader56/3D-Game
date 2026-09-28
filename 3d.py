@@ -28,7 +28,7 @@ world_size_y = 128
 texture_size_x = 64
 texture_size_y = 64
 
-tile_colors = [(255,0,0), (0,0,225),(228,230,168)]
+tile_colors = [(255,0,0), (0,0,225),(228,230,168), (0,10,50)]
 floor_color = (158, 132, 99)
 ceiling_color = (249, 244, 206)
 map_color = (255,255,255)
@@ -38,7 +38,6 @@ player_color = (255,0,0)
 
 player_x = 1
 player_y = 1
-
 
 step_x = 0
 step_y = 0
@@ -65,7 +64,11 @@ tile_select = 0
 hud = False
 
 #world_data = [[2 if x == 0 or x == world_size_x-1 or y == 0 or y == world_size_y-1 else 0 for x in range(world_size_x)] for y in range(world_size_y)]
-world_data = [[random.randint(1,3) if random.randint(0,4) == 4 else 0 for x in range(world_size_x)] for y in range(world_size_y)]
+#world_data = [[random.randint(1,4) if random.randint(0,4) == 4 else 0 for x in range(world_size_x)] for y in range(world_size_y)]
+world_data = [[0 for x in range(world_size_x)] for y in range(world_size_y)]
+
+entities = [(100,100), (150, 300)]
+
 
 depth_list = []
 
@@ -87,6 +90,7 @@ gradient_floor_surf = pygame.transform.smoothscale(floor_surf, (window_size_x, w
 """
 
 wall_image = pygame.image.load("wall.png")
+entity_image = pygame.image.load("Stoic_guy.png")
 
 # Used for spritesheets and animation (Credits to Coding with Russ)
 def get_image(sheet, frame, width, height, scale_x, scale_y, color):
@@ -158,7 +162,7 @@ while True:
     past_player_x = float(player_x)
     past_player_y = float(player_y)
                 
-    player_dir = math.radians(dir)
+    
 
     if click_w == True:
         player_x += math.cos(player_dir)*(player_speed*dt)
@@ -196,6 +200,8 @@ while True:
         dir = 0
     if dir < 0:
         dir = 360
+
+    player_dir = math.radians(dir)
 
 # Player collsion 
     if player_tile_x < world_size_y and player_tile_y >= 0:
@@ -235,10 +241,10 @@ while True:
                     player_x = float(past_player_x)
 
                 
-    if tile_select > 3:
+    if tile_select > 4:
         tile_select = 0
     if tile_select < 0:
-        tile_select = 3
+        tile_select = 4
 
     # Draws the floor and ceiling gradients
     screen.fill((0,0,0))
@@ -260,6 +266,9 @@ while True:
     # Raycaster
     lines = []
     ray_lines = []
+
+    depth_list = []
+
     circles = []
     for x in range(240):
         ray_x = 0
@@ -305,7 +314,7 @@ while True:
         tile_y = int(player_tile_y)
 
         #print(delta_x, delta_y)
-        b = 0
+
         while True:
 
             if side_y < side_x:
@@ -333,6 +342,7 @@ while True:
             
             # math.sqrt(((ray_x)**2)+((ray_y)**2))*math.cos(d-player_dir) < 128 and
             if world_ray_x >= 0 and world_ray_x < world_size_x and world_ray_y >= 0 and world_ray_y < world_size_y:
+                
                 final_dif = 0
                 if not world_data[world_ray_y][world_ray_x] == 0:
 
@@ -340,22 +350,30 @@ while True:
                     texture_y = ((((ray_y+player_y) - (tile_y*tile_size_y)) % tile_size_y)/tile_size_y)*texture_size_y
 
                     if side_hit == 1:
-                        final_dif = texture_x
+                        if round(((ray_y+player_y) - (tile_y*tile_size_y))) == 0:
+                            final_dif = texture_size_x-texture_x
+                        else:
+                            final_dif = texture_x
                     elif side_hit == 0:
-                        final_dif = texture_y
+                        if round(((ray_x+player_x) - (tile_x*tile_size_x))) == 0:
+                            final_dif = texture_y
+                        else:
+                            final_dif = texture_size_y-texture_y
 
-            
+                    depth_list.append(math.sqrt(((ray_x)**2)+((ray_y)**2))*math.cos(d-player_dir))
+
                     lines.append((math.sqrt(((ray_x)**2)+((ray_y)**2))*math.cos(d-player_dir), final_dif, world_data[world_ray_y][world_ray_x]))
                     break
+
+                elif math.sqrt(((world_ray_x-player_tile_x)**2)+((world_ray_y-player_tile_y)**2)) > 25:
+                    lines.append((-1,0,0))
+                    break
+
             else:
+                depth_list.append(-1)
                 lines.append((-1,0,0))
                 break
             
-            if b == 40:
-                lines.append((-1,0,0))
-                break
-
-            b += 1
 
         ray_lines.append((ray_x,ray_y))
 
@@ -376,7 +394,7 @@ while True:
     """
 
     # Draws the 3D world
-    for i in range(len(lines)):
+    for i in range(240):
         line_distance = lines[i][0]
         slice_index = lines[i][1]
         tile = lines[i][2]
@@ -395,8 +413,7 @@ while True:
                     line_color[e] = 0
             """
 
-            #if line_height < 1200:
-            img = get_image(wall_image, slice_index+((tile)*64), 1, 64, 4, line_height/64, None)
+            img = get_image(wall_image, slice_index+((tile)*64), 1, 64, 4, line_height/64, None)           
             screen.blit(img, (i*4, (((-(line_height)))/2) + window_half_y))
 
 
