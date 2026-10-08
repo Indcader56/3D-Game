@@ -48,6 +48,13 @@ dir = 0
 player_dir = 0
 player_speed = 50
 
+# Trying to replace it with vectors
+dir_x = 0
+dir_y = 1
+
+plane_x = .66
+plane_y = 0
+
 click_w = False
 click_s = False
 click_a = False
@@ -366,12 +373,12 @@ while True:
                     break
 
                 elif math.sqrt(((world_ray_x-player_tile_x)**2)+((world_ray_y-player_tile_y)**2)) > 25:
-                    lines.append((-1,0,0))
+                    lines.append(None)
                     break
 
             else:
-                depth_list.append(-1)
-                lines.append((-1,0,0))
+                depth_list.append(None)
+                lines.append(None)
                 break
             
 
@@ -388,19 +395,24 @@ while True:
         if not d == 0:
             #pygame.draw.line(screen, (int(255-(255*(d/window_half_y))),int(255-(255*(d/window_half_y))),0), (0, ((i*4)+window_half_y)), (window_size_x, ((i*4)+window_half_y)), 4)
             for e in range(int(window_size_x/4)):
-                pygame.draw.rect(floor, (random.randint(50,75),random.randint(200,255),random.randint(100,150)),(e*4 ,int((i*4)), 4,4))
+                pygame.draw.rect(floor, (random.randint(0,255),random.randint(0,255),random.randint(0,255)),(e*4 ,int((i*4)), 4,4))
 
     screen.blit(floor, (0,window_half_y))
     """
 
     # Draws the 3D world
     for i in range(240):
-        line_distance = lines[i][0]
-        slice_index = lines[i][1]
-        tile = lines[i][2]
-        if line_distance != -1 and line_distance != 0:
+        line = lines[i]
+        if line != None:
+            line_distance = line[0]
+            slice_index = line[1]
+            tile = line[2]
+
+            line_height = (window_size_y/line_distance)*10
             
-            line_height = ((window_size_y/line_distance)*10)
+            img = get_image(wall_image, slice_index+((tile)*64), 1, 64, 4, line_height/64, None)           
+            screen.blit(img, (i*4, ((-line_height*5)/2) + window_half_y))
+
 
             # For when we used to draw plain colors
             """
@@ -412,10 +424,6 @@ while True:
                 elif line_color[e] < 0:
                     line_color[e] = 0
             """
-
-            img = get_image(wall_image, slice_index+((tile)*64), 1, 64, 4, line_height/64, None)           
-            screen.blit(img, (i*4, (((-(line_height)))/2) + window_half_y))
-
 
             # For when we used to draw plain colors
             #pygame.draw.line(screen, line_color, (i*4, (-line_height/2) + window_half_y), (i*4, (line_height/2) + window_half_y), 4)
@@ -429,10 +437,12 @@ while True:
                 if world_data[y][x] != 0:
                     pygame.draw.rect(screen, tile_colors[world_data[y][x]-1], (((tile_size_x*x)-player_x)+window_half_x,((tile_size_y*y)-player_y)+window_half_y,tile_size_x,tile_size_y))
 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+
         for ray in ray_lines:
             pygame.draw.line(screen, (ray_color), (window_half_x,window_half_y), (ray[0]+window_half_x, ray[1]+window_half_y), 1)
 
+        for entity in entities:
+             pygame.draw.circle(screen, player_color, ((entity[0]+window_half_x)-player_x, (entity[1]+window_half_y)-player_y), 2)
         """
         for circle in circles:
             pygame.draw.circle(screen, player_color, (circle[0]+window_half_x, circle[1]+window_half_y), 1)
