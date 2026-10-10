@@ -43,17 +43,13 @@ step_x = 0
 step_y = 0
 
 player_size = 2
-
-dir = 0
-player_dir = 0
 player_speed = 50
 
-# Trying to replace it with vectors
-dir_x = 0
-dir_y = 1
+dir_x = 1
+dir_y = 0
 
-plane_x = .66
-plane_y = 0
+plane_x = 0
+plane_y = 1
 
 click_w = False
 click_s = False
@@ -78,23 +74,6 @@ entities = [(100,100), (150, 300)]
 
 
 depth_list = []
-
-# Makes the floor and ceiling textures
-"""
-celing_surf = pygame.Surface((1,3))
-floor_surf = pygame.Surface((1,3))
-
-celing_surf.set_at((0,0), ceiling_color)
-celing_surf.set_at((0,1), (ceiling_color[0]/2, ceiling_color[1]/2, ceiling_color[2]/2))
-celing_surf.set_at((0,2), (0,0,0))
-
-floor_surf.set_at((0,0), (0,0,0))
-floor_surf.set_at((0,1), (floor_color[0]/2, floor_color[1]/2, floor_color[2]/2))
-floor_surf.set_at((0,2), floor_color)
-
-gradient_celing_surf = pygame.transform.smoothscale(celing_surf, (window_size_x, window_half_y))
-gradient_floor_surf = pygame.transform.smoothscale(floor_surf, (window_size_x, window_half_y))
-"""
 
 wall_image = pygame.image.load("wall.png")
 entity_image = pygame.image.load("Stoic_guy.png")
@@ -168,31 +147,44 @@ while True:
 
     past_player_x = float(player_x)
     past_player_y = float(player_y)
+
+    temp_dir_x = float(dir_x)
+    temp_dir_y = float(dir_y)
+
+    temp_plane_x = float(plane_x)
+    temp_plane_y = float(plane_y)
                 
-    
 
     if click_w == True:
-        player_x += math.cos(player_dir)*(player_speed*dt)
-        player_y += math.sin(player_dir)*(player_speed*dt)
+        player_x += dir_x*(player_speed*dt)
+        player_y += dir_y*(player_speed*dt)
 
     if click_s == True:
-        player_x -= math.cos(player_dir)*(player_speed*dt)
-        player_y -= math.sin(player_dir)*(player_speed*dt)
-
+        player_x -= dir_x*(player_speed*dt)
+        player_y -= dir_y*(player_speed*dt)
                     
     if click_a == True:
-        player_x += math.cos(player_dir-(math.pi/2))*(player_speed*dt)
-        player_y += math.sin(player_dir-(math.pi/2))*(player_speed*dt)
+        player_x += dir_y*(player_speed*dt)
+        player_y -= dir_x*(player_speed*dt)
 
     if click_d == True:
-        player_x += math.cos(player_dir+(math.pi/2))*(player_speed*dt)
-        player_y += math.sin(player_dir+(math.pi/2))*(player_speed*dt)
+        player_x -= dir_y*(player_speed*dt)
+        player_y += dir_x*(player_speed*dt)
 
 
     if click_left == True:
-        dir -= 2
+        dir_x = math.cos(math.radians(-2))*temp_dir_x - math.sin(math.radians(-2))*temp_dir_y
+        dir_y = math.sin(math.radians(-2))*temp_dir_x + math.cos(math.radians(-2))*temp_dir_y
+
+        plane_x = math.cos(math.radians(-2))*temp_plane_x - math.sin(math.radians(-2))*temp_plane_y
+        plane_y = math.sin(math.radians(-2))*temp_plane_x + math.cos(math.radians(-2))*temp_plane_y
+
     if click_right == True:
-        dir += 2
+        dir_x = math.cos(math.radians(2))*temp_dir_x - math.sin(math.radians(2))*temp_dir_y
+        dir_y = math.sin(math.radians(2))*temp_dir_x + math.cos(math.radians(2))*temp_dir_y
+
+        plane_x = math.cos(math.radians(2))*temp_plane_x - math.sin(math.radians(2))*temp_plane_y
+        plane_y = math.sin(math.radians(2))*temp_plane_x + math.cos(math.radians(2))*temp_plane_y
 
     if mouse_down == True:
         mouse_block_x = round((mouse_x-window_half_x)+player_x)//tile_size_x
@@ -202,13 +194,6 @@ while True:
             if mouse_block_x < world_size_x and mouse_block_x >= 0:
                 world_data[mouse_block_y][mouse_block_x] = tile_select
  
-
-    if dir > 360:
-        dir = 0
-    if dir < 0:
-        dir = 360
-
-    player_dir = math.radians(dir)
 
 # Player collsion 
     if player_tile_x < world_size_y and player_tile_y >= 0:
@@ -260,15 +245,6 @@ while True:
     pygame.draw.rect(screen, (0,0,255), (0,0,window_size_x,window_half_y))
     pygame.draw.rect(screen, (0,255,0), (0,window_half_y,window_size_x,window_size_y))
 
-    # Blits the gradient background
-    """
-    screen.blit(gradient_celing_surf, (0,0))
-    screen.blit(gradient_floor_surf, (0,window_half_y))
-    """
-    # Blits the backrooms background
-    #pygame.draw.rect(screen, ceiling_color, (0,0,window_size_x,window_half_y))
-    #pygame.draw.rect(screen, floor_color, (0,window_half_y,window_size_x,window_size_y))
-    
 
     # Raycaster
     lines = []
@@ -281,30 +257,33 @@ while True:
         ray_x = 0
         ray_y = 0
 
+        camera_x = (x/120) -1
+
+        ray_dir_x = dir_x + (plane_x * camera_x)
+        ray_dir_y = dir_y + (plane_y * camera_x)
+
         side_hit = 0
 
-        d = math.radians(dir+((x*0.375)-45))
-
-        
-        if math.cos(d) > 0:
+        if ray_dir_x > 0:
             step_x = 1
         else:
             step_x = -1
 
-        if math.sin(d) > 0:
+        if ray_dir_y > 0:
             step_y = -1
         else:
             step_y = 1
 
-        if math.sin(d) == 0:
+        if ray_dir_y == 0:
             delta_y = 10**21
         else:
-            delta_y = abs(tile_size_y/math.sin(d))
+            delta_y = abs(tile_size_y/ray_dir_y)
 
-        if math.cos(d) == 0:
+        if ray_dir_x == 0:
             delta_x = 10**21
         else:
-            delta_x = abs(tile_size_x/math.cos(d))
+            delta_x = abs(tile_size_x/ray_dir_x)
+
 
         if step_x == -1:
             side_x = delta_x*((player_x-((player_tile_x)*tile_size_x))/tile_size_x)
@@ -315,33 +294,32 @@ while True:
             side_y = delta_y*(1-(player_y-((player_tile_y)*tile_size_y))/tile_size_y)
         else:
             side_y = delta_y*(((player_y-((player_tile_y)*tile_size_y))/tile_size_y))
-        #print(side_x, side_y)
+
         
         tile_x = int(player_tile_x)
         tile_y = int(player_tile_y)
 
-        #print(delta_x, delta_y)
 
         while True:
 
             if side_y < side_x:
-                ray_x = math.cos(d)*side_y
-                ray_y = math.sin(d)*side_y
+                ray_x = ray_dir_x*side_y
+                ray_y = ray_dir_y*side_y
 
                 tile_y -= step_y
 
                 side_y += delta_y
                 side_hit = 1
             else:
-                ray_x = math.cos(d)*side_x
-                ray_y = math.sin(d)*side_x
+                ray_x = ray_dir_x*side_x
+                ray_y = ray_dir_y*side_x
 
                 tile_x += step_x
 
                 side_x += delta_x
                 side_hit = 0
             
-            #circles.append((ray_x,ray_y))
+            circles.append((ray_x,ray_y))
 
             world_ray_x = int(tile_x)
             world_ray_y = int(tile_y)
@@ -356,21 +334,31 @@ while True:
                     texture_x = ((((ray_x+player_x) - (tile_x*tile_size_x)) % tile_size_x)/tile_size_x)*texture_size_x
                     texture_y = ((((ray_y+player_y) - (tile_y*tile_size_y)) % tile_size_y)/tile_size_y)*texture_size_y
 
+                    perp_wall_x = side_x - delta_x
+                    perp_wall_y = side_y - delta_y
+                    
                     if side_hit == 1:
                         if round(((ray_y+player_y) - (tile_y*tile_size_y))) == 0:
                             final_dif = texture_size_x-texture_x
                         else:
                             final_dif = texture_x
+                        
+                        
                     elif side_hit == 0:
                         if round(((ray_x+player_x) - (tile_x*tile_size_x))) == 0:
                             final_dif = texture_y
                         else:
                             final_dif = texture_size_y-texture_y
+                        
 
-                    depth_list.append(math.sqrt(((ray_x)**2)+((ray_y)**2))*math.cos(d-player_dir))
-
-                    lines.append((math.sqrt(((ray_x)**2)+((ray_y)**2))*math.cos(d-player_dir), final_dif, world_data[world_ray_y][world_ray_x]))
-                    break
+                    if side_hit == 0:
+                        depth_list.append(perp_wall_x)
+                        lines.append((perp_wall_x, final_dif, world_data[world_ray_y][world_ray_x]))
+                        break
+                    else:
+                        depth_list.append(perp_wall_y)
+                        lines.append((perp_wall_y, final_dif, world_data[world_ray_y][world_ray_x]))
+                        break
 
                 elif math.sqrt(((world_ray_x-player_tile_x)**2)+((world_ray_y-player_tile_y)**2)) > 25:
                     lines.append(None)
@@ -384,22 +372,6 @@ while True:
 
         ray_lines.append((ray_x,ray_y))
 
-    # Floor test
-    """
-    for i in range(int(window_half_y/4)):
-        try:
-            d = window_size_y/((2*(i+window_half_y)-window_size_y))
-        except ZeroDivisionError:
-            d = 0
-        #print(d)
-        if not d == 0:
-            #pygame.draw.line(screen, (int(255-(255*(d/window_half_y))),int(255-(255*(d/window_half_y))),0), (0, ((i*4)+window_half_y)), (window_size_x, ((i*4)+window_half_y)), 4)
-            for e in range(int(window_size_x/4)):
-                pygame.draw.rect(floor, (random.randint(0,255),random.randint(0,255),random.randint(0,255)),(e*4 ,int((i*4)), 4,4))
-
-    screen.blit(floor, (0,window_half_y))
-    """
-
     # Draws the 3D world
     for i in range(240):
         line = lines[i]
@@ -411,22 +383,7 @@ while True:
             line_height = (window_size_y/line_distance)*10
             
             img = get_image(wall_image, slice_index+((tile)*64), 1, 64, 4, line_height/64, None)           
-            screen.blit(img, (i*4, ((-line_height*5)/2) + window_half_y))
-
-
-            # For when we used to draw plain colors
-            """
-            line_color = [tile_color[0]-round(lines[i]*2), tile_color[1]-round(lines[i]*2), tile_color[2]-round(lines[i]*2)]
-
-            for e in range(3):
-                if line_color[e] > 255:
-                    line_color[e] = 255
-                elif line_color[e] < 0:
-                    line_color[e] = 0
-            """
-
-            # For when we used to draw plain colors
-            #pygame.draw.line(screen, line_color, (i*4, (-line_height/2) + window_half_y), (i*4, (line_height/2) + window_half_y), 4)
+            screen.blit(img, (i*4, ((-line_height)/2) + window_half_y))
 
 
 
@@ -443,13 +400,13 @@ while True:
 
         for entity in entities:
              pygame.draw.circle(screen, player_color, ((entity[0]+window_half_x)-player_x, (entity[1]+window_half_y)-player_y), 2)
-        """
+        
         for circle in circles:
             pygame.draw.circle(screen, player_color, (circle[0]+window_half_x, circle[1]+window_half_y), 1)
-        """
+        
 
         pygame.draw.circle(screen, player_color, (window_half_x,window_half_y), player_size)
-        pygame.draw.line(screen, player_color, (window_half_x,window_half_y), ((math.cos(player_dir)*20)+window_half_x,(math.sin(player_dir)*20)+window_half_y))
+        pygame.draw.line(screen, player_color, (window_half_x,window_half_y), ((dir_x*20)+window_half_x,(dir_y*20)+window_half_y))
 
         pygame.draw.rect(screen, map_color, ((-player_x)+window_half_x,(-player_y)+window_half_y,tile_size_x*world_size_x,tile_size_y*world_size_y), 4)
 
