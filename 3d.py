@@ -232,13 +232,13 @@ while True:
                 if not world_data[player_tile_y][player_tile_x+1] == 0 and player_local_tile_pos_x > tile_size_x-1:
                     player_x = float(past_player_x)
 
-                
+    # Limits the player's selection to the avalable tiles
     if tile_select > 4:
         tile_select = 0
     if tile_select < 0:
         tile_select = 4
 
-    # Draws the floor and ceiling gradients
+    
     screen.fill((0,0,0))
 
     # Blits the happy background
@@ -254,11 +254,14 @@ while True:
 
     circles = []
     for x in range(240):
+        # Position of the ray initally
         ray_x = 0
         ray_y = 0
 
+        # A value from -1 to 1 which determines the direction the ray will be heading
         camera_x = (x/120) -1
 
+        # The ray vector
         ray_dir_x = dir_x + (plane_x * camera_x)
         ray_dir_y = dir_y + (plane_y * camera_x)
 
@@ -334,14 +337,13 @@ while True:
                     texture_x = ((((ray_x+player_x) - (tile_x*tile_size_x)) % tile_size_x)/tile_size_x)*texture_size_x
                     texture_y = ((((ray_y+player_y) - (tile_y*tile_size_y)) % tile_size_y)/tile_size_y)*texture_size_y
 
-                    perp_wall_x = side_x - delta_x
-                    perp_wall_y = side_y - delta_y
                     
                     if side_hit == 1:
                         if round(((ray_y+player_y) - (tile_y*tile_size_y))) == 0:
                             final_dif = texture_size_x-texture_x
                         else:
                             final_dif = texture_x
+                        perp_wall = side_y - delta_y
                         
                         
                     elif side_hit == 0:
@@ -349,16 +351,12 @@ while True:
                             final_dif = texture_y
                         else:
                             final_dif = texture_size_y-texture_y
+                        perp_wall = side_x - delta_x
                         
+                    depth_list.append(perp_wall)
+                    lines.append((perp_wall, final_dif, world_data[world_ray_y][world_ray_x]))
+                    break
 
-                    if side_hit == 0:
-                        depth_list.append(perp_wall_x)
-                        lines.append((perp_wall_x, final_dif, world_data[world_ray_y][world_ray_x]))
-                        break
-                    else:
-                        depth_list.append(perp_wall_y)
-                        lines.append((perp_wall_y, final_dif, world_data[world_ray_y][world_ray_x]))
-                        break
 
                 elif math.sqrt(((world_ray_x-player_tile_x)**2)+((world_ray_y-player_tile_y)**2)) > 25:
                     lines.append(None)
@@ -369,7 +367,6 @@ while True:
                 lines.append(None)
                 break
             
-
         ray_lines.append((ray_x,ray_y))
 
     # Draws the 3D world
@@ -386,7 +383,6 @@ while True:
             screen.blit(img, (i*4, ((-line_height)/2) + window_half_y))
 
 
-
     # Draws the map if the hud is enabled
     if hud == True:
         for y in range(world_size_y):
@@ -400,10 +396,10 @@ while True:
 
         for entity in entities:
              pygame.draw.circle(screen, player_color, ((entity[0]+window_half_x)-player_x, (entity[1]+window_half_y)-player_y), 2)
-        
+        """
         for circle in circles:
             pygame.draw.circle(screen, player_color, (circle[0]+window_half_x, circle[1]+window_half_y), 1)
-        
+        """
 
         pygame.draw.circle(screen, player_color, (window_half_x,window_half_y), player_size)
         pygame.draw.line(screen, player_color, (window_half_x,window_half_y), ((dir_x*20)+window_half_x,(dir_y*20)+window_half_y))
