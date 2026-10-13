@@ -22,13 +22,13 @@ clock = pygame.time.Clock()
 tile_size_x = 16
 tile_size_y = 16
 
-world_size_x = 128
-world_size_y = 128
+world_size_x = 32
+world_size_y = 32
 
 texture_size_x = 64
 texture_size_y = 64
 
-tile_colors = [(255,0,0), (0,0,225),(228,230,168), (0,10,50)]
+tile_colors = [(255,0,0), (0,0,225),(228,230,168), (0,10,50), (255,255,0), (100,100,0)]
 floor_color = (158, 132, 99)
 ceiling_color = (249, 244, 206)
 map_color = (255,255,255)
@@ -62,20 +62,22 @@ click_right = False
 
 mouse_down = False
 
-tile_select = 0
+tile_select = [1,1,1,1]
+delete = 0
 
 hud = False
 
 #world_data = [[2 if x == 0 or x == world_size_x-1 or y == 0 or y == world_size_y-1 else 0 for x in range(world_size_x)] for y in range(world_size_y)]
-#world_data = [[random.randint(1,4) if random.randint(0,4) == 4 else 0 for x in range(world_size_x)] for y in range(world_size_y)]
+#world_data = [[[1,1,2,2] if random.randint(0,4) == 4 else 0 for x in range(world_size_x)] for y in range(world_size_y)]
 world_data = [[0 for x in range(world_size_x)] for y in range(world_size_y)]
 
-entities = [(100,100), (150, 300)]
+entities = [(100,100), (150, 300), (0, 50)]
 
 
 depth_list = []
 
 wall_image = pygame.image.load("wall.png")
+
 entity_image = pygame.image.load("Stoic_guy.png")
 
 # Used for spritesheets and animation (Credits to Coding with Russ)
@@ -86,8 +88,6 @@ def get_image(sheet, frame, width, height, scale_x, scale_y, color):
 	image.set_colorkey(color)
 
 	return image.convert_alpha()
-
-floor = pygame.Surface((window_size_x, window_half_y))
 
 while True:
     dt = clock.tick(60)/1000
@@ -117,8 +117,20 @@ while True:
             if event.key == pygame.K_RIGHT:
                 click_right = True
 
+            if event.key == pygame.K_1:
+                tile_select[0] += 1
+            if event.key == pygame.K_2:
+                tile_select[1] += 1
+            if event.key == pygame.K_3:
+                tile_select[2] += 1
+            if event.key == pygame.K_4:
+                tile_select[3] += 1
             if event.key == pygame.K_SPACE:
-                tile_select += 1
+                if delete == 0:
+                    delete = 1
+                else:
+                    delete = 0
+
             if event.key == pygame.K_h:
                 if hud ==  True:
                     hud = False
@@ -192,13 +204,15 @@ while True:
 
         if mouse_block_y < world_size_y and mouse_block_y >= 0:
             if mouse_block_x < world_size_x and mouse_block_x >= 0:
-                world_data[mouse_block_y][mouse_block_x] = tile_select
+                if delete == 0:
+                    world_data[mouse_block_y][mouse_block_x] = list(tile_select)
+                else:
+                    world_data[mouse_block_y][mouse_block_x] = 0
  
 
 # Player collsion 
     if player_tile_x < world_size_y and player_tile_y >= 0:
         if player_tile_x < world_size_x and player_tile_x >= 0:
-
 
             # The position of the player in a tile from 0 - 16
             player_local_tile_pos_x = player_x-(player_tile_x*tile_size_x)
@@ -233,17 +247,18 @@ while True:
                     player_x = float(past_player_x)
 
     # Limits the player's selection to the avalable tiles
-    if tile_select > 4:
-        tile_select = 0
-    if tile_select < 0:
-        tile_select = 4
+    for i in range(4):
+        if tile_select[i] > 6:
+            tile_select[i] = 1
+        if tile_select[i] < 1:
+            tile_select[i] = 6
 
     
     screen.fill((0,0,0))
 
     # Blits the happy background
     pygame.draw.rect(screen, (0,0,255), (0,0,window_size_x,window_half_y))
-    pygame.draw.rect(screen, (0,255,0), (0,window_half_y,window_size_x,window_size_y))
+    pygame.draw.rect(screen, (0,220,30), (0,window_half_y,window_size_x,window_size_y))
 
 
     # Raycaster
@@ -324,15 +339,15 @@ while True:
             
             circles.append((ray_x,ray_y))
 
-            world_ray_x = int(tile_x)
-            world_ray_y = int(tile_y)
+            tile_x = int(tile_x)
+            tile_y = int(tile_y)
 
-            
+            side = None
             # math.sqrt(((ray_x)**2)+((ray_y)**2))*math.cos(d-player_dir) < 128 and
-            if world_ray_x >= 0 and world_ray_x < world_size_x and world_ray_y >= 0 and world_ray_y < world_size_y:
+            if tile_x >= 0 and tile_x < world_size_x and tile_y >= 0 and tile_y < world_size_y:
                 
                 final_dif = 0
-                if not world_data[world_ray_y][world_ray_x] == 0:
+                if not world_data[tile_y][tile_x] == 0:
 
                     texture_x = ((((ray_x+player_x) - (tile_x*tile_size_x)) % tile_size_x)/tile_size_x)*texture_size_x
                     texture_y = ((((ray_y+player_y) - (tile_y*tile_size_y)) % tile_size_y)/tile_size_y)*texture_size_y
@@ -341,24 +356,29 @@ while True:
                     if side_hit == 1:
                         if round(((ray_y+player_y) - (tile_y*tile_size_y))) == 0:
                             final_dif = texture_size_x-texture_x
+                            side = 0
                         else:
                             final_dif = texture_x
+                            side = 2
+
                         perp_wall = side_y - delta_y
-                        
                         
                     elif side_hit == 0:
                         if round(((ray_x+player_x) - (tile_x*tile_size_x))) == 0:
                             final_dif = texture_y
+                            side = 3
                         else:
                             final_dif = texture_size_y-texture_y
+                            side = 1
+
                         perp_wall = side_x - delta_x
-                        
+
                     depth_list.append(perp_wall)
-                    lines.append((perp_wall, final_dif, world_data[world_ray_y][world_ray_x]))
+                    lines.append((perp_wall, final_dif, world_data[tile_y][tile_x], side_hit, side))
                     break
 
 
-                elif math.sqrt(((world_ray_x-player_tile_x)**2)+((world_ray_y-player_tile_y)**2)) > 25:
+                elif math.sqrt(((tile_x-player_tile_x)**2)+((tile_y-player_tile_y)**2)) > 25:
                     lines.append(None)
                     break
 
@@ -369,6 +389,28 @@ while True:
             
         ray_lines.append((ray_x,ray_y))
 
+    # Sorts entities from furthest to closest
+    entities.sort(reverse=True, key=lambda entity: math.sqrt((entity[0]-player_x)**2 + (entity[1]-player_y)**2))
+
+    # Don't understand this at all!!!!!!!!!!
+    """
+    inverse = 1/(plane_x*dir_y - dir_x * plane_y)
+
+    for entity in entities:
+        relative_x = entity[0] - player_x
+        relative_y = entity[1] - player_y
+
+        transform_x = inverse * (dir_y*relative_x -dir_x*relative_y)
+        transform_y = inverse *(-plane_y*relative_x+plane_x*relative_y)
+
+        screen_x = window_half_x * (1+ transform_x/transform_y)
+
+        entity_size = abs(int(window_size_y/transform_y))
+
+        draw_start_x = (screen_x) - (entity_size//2)
+        draw_end_x = (screen_x) + (entity_size//2)
+    """
+    
     # Draws the 3D world
     for i in range(240):
         line = lines[i]
@@ -376,11 +418,19 @@ while True:
             line_distance = line[0]
             slice_index = line[1]
             tile = line[2]
+            side = line[3]
+            exact_side = line[4]
 
             line_height = (window_size_y/line_distance)*10
-            
-            img = get_image(wall_image, slice_index+((tile)*64), 1, 64, 4, line_height/64, None)           
-            screen.blit(img, (i*4, ((-line_height)/2) + window_half_y))
+            #(sheet, frame, width, height, scale_x, scale_y, color):
+
+            img = get_image(wall_image, slice_index+((tile[exact_side])*64), 1, 64, 4, line_height/64, None)
+
+            if side == 1:
+                img.fill((25,25,25),special_flags=pygame.BLEND_RGB_SUB)
+
+            screen.blit(img, (i*4, window_half_y-(line_height/2)))
+
 
 
     # Draws the map if the hud is enabled
@@ -388,7 +438,7 @@ while True:
         for y in range(world_size_y):
             for x in range(world_size_x):
                 if world_data[y][x] != 0:
-                    pygame.draw.rect(screen, tile_colors[world_data[y][x]-1], (((tile_size_x*x)-player_x)+window_half_x,((tile_size_y*y)-player_y)+window_half_y,tile_size_x,tile_size_y))
+                    pygame.draw.rect(screen,(0,0,0), (((tile_size_x*x)-player_x)+window_half_x,((tile_size_y*y)-player_y)+window_half_y,tile_size_x,tile_size_y))
 
 
         for ray in ray_lines:
@@ -401,9 +451,13 @@ while True:
             pygame.draw.circle(screen, player_color, (circle[0]+window_half_x, circle[1]+window_half_y), 1)
         """
 
+        for index, tile in enumerate(tile_select):
+            pygame.draw.rect(screen,tile_colors[tile_select[index]-1], (index*tile_size_x,0,tile_size_x,tile_size_y))
+
         pygame.draw.circle(screen, player_color, (window_half_x,window_half_y), player_size)
         pygame.draw.line(screen, player_color, (window_half_x,window_half_y), ((dir_x*20)+window_half_x,(dir_y*20)+window_half_y))
 
         pygame.draw.rect(screen, map_color, ((-player_x)+window_half_x,(-player_y)+window_half_y,tile_size_x*world_size_x,tile_size_y*world_size_y), 4)
 
+    print(tile_select)
     pygame.display.flip()
