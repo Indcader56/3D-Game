@@ -96,7 +96,7 @@ def get_image(sheet, frame, width, height, scale_x, scale_y, color):
 	return image
 
 tile_selection = []
-for i in range(10):
+for i in range(11):
     tile_selection.append(get_image(wall_image, i, 64,64,1,1, None))
 
 while True:
@@ -252,47 +252,48 @@ while True:
  
 
 # Player collsion 
-    if player_tile_x < world_size_y and player_tile_y >= 0:
-        if player_tile_x < world_size_x and player_tile_x >= 0:
+    if hud == False:
+        if player_tile_x < world_size_y and player_tile_y >= 0:
+            if player_tile_x < world_size_x and player_tile_x >= 0:
 
-            # The position of the player in a tile from 0 - 16
-            player_local_tile_pos_x = player_x-(player_tile_x*tile_size_x)
-            player_local_tile_pos_y = player_y-(player_tile_y*tile_size_y)
+                # The position of the player in a tile from 0 - 16
+                player_local_tile_pos_x = player_x-(player_tile_x*tile_size_x)
+                player_local_tile_pos_y = player_y-(player_tile_y*tile_size_y)
 
-            # Checks if the player goes out of the bounds of the world and fixes their position
-            if player_tile_y == 0 and player_local_tile_pos_y < 1:
-                player_y = float(past_player_y)
-            if player_tile_y == world_size_y-1 and player_local_tile_pos_y > tile_size_y-1:
-                player_y = float(past_player_y)
-
-            if player_tile_x == 0 and player_local_tile_pos_x < 1:
-                player_x = float(past_player_x)
-            if player_tile_x == world_size_x-1 and player_local_tile_pos_x > tile_size_x-1:
-                player_x = float(past_player_x)
-
-            # Checks if a player has hit the side of a block and fixes their position
-            if not player_tile_y == 0:
-                if not world_data[player_tile_y-1][player_tile_x] == 0 and player_local_tile_pos_y < 1:
+                # Checks if the player goes out of the bounds of the world and fixes their position
+                if player_tile_y == 0 and player_local_tile_pos_y < 1:
+                    player_y = float(past_player_y)
+                if player_tile_y == world_size_y-1 and player_local_tile_pos_y > tile_size_y-1:
                     player_y = float(past_player_y)
 
-            if not player_tile_y == world_size_y-1:
-                if not world_data[player_tile_y+1][player_tile_x] == 0 and player_local_tile_pos_y > tile_size_y-1:
-                    player_y = float(past_player_y)
-
-            if not player_tile_x == 0:
-                if not world_data[player_tile_y][player_tile_x-1] == 0 and player_local_tile_pos_x < 1:
+                if player_tile_x == 0 and player_local_tile_pos_x < 1:
+                    player_x = float(past_player_x)
+                if player_tile_x == world_size_x-1 and player_local_tile_pos_x > tile_size_x-1:
                     player_x = float(past_player_x)
 
-            if not player_tile_x == world_size_x-1:
-                if not world_data[player_tile_y][player_tile_x+1] == 0 and player_local_tile_pos_x > tile_size_x-1:
-                    player_x = float(past_player_x)
+                # Checks if a player has hit the side of a block and fixes their position
+                if not player_tile_y == 0:
+                    if not world_data[player_tile_y-1][player_tile_x] == 0 and player_local_tile_pos_y < 1:
+                        player_y = float(past_player_y)
+
+                if not player_tile_y == world_size_y-1:
+                    if not world_data[player_tile_y+1][player_tile_x] == 0 and player_local_tile_pos_y > tile_size_y-1:
+                        player_y = float(past_player_y)
+
+                if not player_tile_x == 0:
+                    if not world_data[player_tile_y][player_tile_x-1] == 0 and player_local_tile_pos_x < 1:
+                        player_x = float(past_player_x)
+
+                if not player_tile_x == world_size_x-1:
+                    if not world_data[player_tile_y][player_tile_x+1] == 0 and player_local_tile_pos_x > tile_size_x-1:
+                        player_x = float(past_player_x)
 
     # Limits the player's selection to the avalable tiles
     for i in range(4):
-        if tile_select[i] > 9:
+        if tile_select[i] > 10:
             tile_select[i] = 1
         if tile_select[i] < 1:
-            tile_select[i] = 9
+            tile_select[i] = 10
 
     
     screen.fill((0,0,0))
