@@ -45,7 +45,7 @@ player_y = 1
 step_x = 0
 step_y = 0
 
-player_size = 2
+player_size = 4
 player_speed = 50
 
 dir_x = 1
@@ -74,10 +74,10 @@ mouse_view = False
 hud = False
 
 #world_data = [[2 if x == 0 or x == world_size_x-1 or y == 0 or y == world_size_y-1 else 0 for x in range(world_size_x)] for y in range(world_size_y)]
-world_data = [[[1,1,1,1] if random.randint(0,4) == 4 else 0 for x in range(world_size_x)] for y in range(world_size_y)]
-#world_data = [[0 for x in range(world_size_x)] for y in range(world_size_y)]
+#world_data = [[[1,1,1,1] if random.randint(0,4) == 4 else 0 for x in range(world_size_x)] for y in range(world_size_y)]
+world_data = [[0 for x in range(world_size_x)] for y in range(world_size_y)]
 
-entities = [(random.randint(0,world_size_x*tile_size_x),random.randint(0,world_size_y*tile_size_y), random.randint(0,2)) for i in range(25)]
+entities = [(random.randint(0,world_size_x*tile_size_x),random.randint(0,world_size_y*tile_size_y), random.randint(0,2), random.randint(0,359)) for i in range(25)]
 
 
 depth_list = []
@@ -87,9 +87,9 @@ wall_image = pygame.image.load("wall.png")
 entity_image = pygame.image.load("Stoic_guy.png")
 
 # Used for spritesheets and animation (Credits to Coding with Russ)
-def get_image(sheet, frame, width, height, scale_x, scale_y, color):
+def get_image(sheet, frame_x, frame_y, width, height, scale_x, scale_y, color):
 	image = pygame.Surface((width, height), pygame.SRCALPHA)
-	image.blit(sheet, (0,0), ((frame* width),0, width, height))
+	image.blit(sheet, (0,0), ((frame_x* width),(frame_y* height), width, height))
 	image = pygame.transform.scale(image, (width * scale_x, height * scale_y))
 	image.set_colorkey(color)
 
@@ -97,7 +97,7 @@ def get_image(sheet, frame, width, height, scale_x, scale_y, color):
 
 tile_selection = []
 for i in range(11):
-    tile_selection.append(get_image(wall_image, i, 64,64,1,1, None))
+    tile_selection.append(get_image(wall_image, i,0, 64,64,1,1, None))
 
 while True:
     dt = clock.tick(60)/1000
@@ -252,41 +252,41 @@ while True:
  
 
 # Player collsion 
-    if hud == False:
-        if player_tile_x < world_size_y and player_tile_y >= 0:
-            if player_tile_x < world_size_x and player_tile_x >= 0:
 
-                # The position of the player in a tile from 0 - 16
-                player_local_tile_pos_x = player_x-(player_tile_x*tile_size_x)
-                player_local_tile_pos_y = player_y-(player_tile_y*tile_size_y)
+    if player_tile_x < world_size_y and player_tile_y >= 0:
+        if player_tile_x < world_size_x and player_tile_x >= 0:
 
-                # Checks if the player goes out of the bounds of the world and fixes their position
-                if player_tile_y == 0 and player_local_tile_pos_y < 1:
+            # The position of the player in a tile from 0 - 16
+            player_local_tile_pos_x = player_x-(player_tile_x*tile_size_x)
+            player_local_tile_pos_y = player_y-(player_tile_y*tile_size_y)
+
+            # Checks if the player goes out of the bounds of the world and fixes their position
+            if player_tile_y == 0 and player_local_tile_pos_y < 1:
+                player_y = float(past_player_y)
+            if player_tile_y == world_size_y-1 and player_local_tile_pos_y > tile_size_y-1:
+                player_y = float(past_player_y)
+
+            if player_tile_x == 0 and player_local_tile_pos_x < 1:
+                player_x = float(past_player_x)
+            if player_tile_x == world_size_x-1 and player_local_tile_pos_x > tile_size_x-1:
+                player_x = float(past_player_x)
+
+            # Checks if a player has hit the side of a block and fixes their position
+            if not player_tile_y == 0:
+                if not world_data[player_tile_y-1][player_tile_x] == 0 and player_local_tile_pos_y < player_size:
                     player_y = float(past_player_y)
-                if player_tile_y == world_size_y-1 and player_local_tile_pos_y > tile_size_y-1:
+
+            if not player_tile_y == world_size_y-1:
+                if not world_data[player_tile_y+1][player_tile_x] == 0 and player_local_tile_pos_y > tile_size_y-player_size:
                     player_y = float(past_player_y)
 
-                if player_tile_x == 0 and player_local_tile_pos_x < 1:
+            if not player_tile_x == 0:
+                if not world_data[player_tile_y][player_tile_x-1] == 0 and player_local_tile_pos_x < player_size:
                     player_x = float(past_player_x)
-                if player_tile_x == world_size_x-1 and player_local_tile_pos_x > tile_size_x-1:
+
+            if not player_tile_x == world_size_x-1:
+                if not world_data[player_tile_y][player_tile_x+1] == 0 and player_local_tile_pos_x > tile_size_x-player_size:
                     player_x = float(past_player_x)
-
-                # Checks if a player has hit the side of a block and fixes their position
-                if not player_tile_y == 0:
-                    if not world_data[player_tile_y-1][player_tile_x] == 0 and player_local_tile_pos_y < 1:
-                        player_y = float(past_player_y)
-
-                if not player_tile_y == world_size_y-1:
-                    if not world_data[player_tile_y+1][player_tile_x] == 0 and player_local_tile_pos_y > tile_size_y-1:
-                        player_y = float(past_player_y)
-
-                if not player_tile_x == 0:
-                    if not world_data[player_tile_y][player_tile_x-1] == 0 and player_local_tile_pos_x < 1:
-                        player_x = float(past_player_x)
-
-                if not player_tile_x == world_size_x-1:
-                    if not world_data[player_tile_y][player_tile_x+1] == 0 and player_local_tile_pos_x > tile_size_x-1:
-                        player_x = float(past_player_x)
 
     # Limits the player's selection to the avalable tiles
     for i in range(4):
@@ -451,7 +451,7 @@ while True:
 
             # In order to avoid errors related to getting too close to a wall or other various scaling issues.
             if line_height/64 < 200 and line_height/64 > 0:
-                img = get_image(wall_image, slice_index+((tile[side])*64), 1, 64, 4, line_height/64, None)
+                img = get_image(wall_image, slice_index+((tile[side])*64),0, 1, 64, 4, line_height/64, None)
 
             # Darkens the north and south side of a wall
             if side == 0 or side == 2:
@@ -492,7 +492,7 @@ while True:
 
             if transform_y > 0 and i >= 0 and i < window_size_x//4 and not depth_list[i] < transform_y:
                 if entity_size/64 < 200 and entity_size/64 > 0:
-                    img = get_image(entity_image, (entity_texture_x*4)+(entity[2]*64), 1, 64, 4, entity_size/64, None).convert_alpha()
+                    img = get_image(entity_image, (entity_texture_x*4)+(entity[2]*64),0, 1, 64, 4, entity_size/64, None).convert_alpha()
                     screen.blit(img, ((i*4), window_half_y-((entity_size/2)*1)))
                 
 
@@ -515,14 +515,12 @@ while True:
             pygame.draw.circle(screen, player_color, (circle[0]+window_half_x, circle[1]+window_half_y), 1)
         """
 
-        for index, tile in enumerate(tile_select):
-            screen.blit(tile_selection[tile_select[index]], (index*texture_size_x,0,tile_size_x,tile_size_y))
-
         pygame.draw.circle(screen, player_color, (window_half_x,window_half_y), player_size)
         pygame.draw.line(screen, player_color, (window_half_x,window_half_y), ((dir_x*20)+window_half_x,(dir_y*20)+window_half_y))
 
         pygame.draw.rect(screen, map_color, ((-player_x)+window_half_x,(-player_y)+window_half_y,tile_size_x*world_size_x,tile_size_y*world_size_y), 4)
 
-        
+        for index, tile in enumerate(tile_select):
+            screen.blit(tile_selection[tile_select[index]], (index*texture_size_x,0,tile_size_x,tile_size_y))
   
     pygame.display.flip()
