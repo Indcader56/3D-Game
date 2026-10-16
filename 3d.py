@@ -77,11 +77,11 @@ mouse_view = False
 hud = False
 
 #world_data = [[2 if x == 0 or x == world_size_x-1 or y == 0 or y == world_size_y-1 else 0 for x in range(world_size_x)] for y in range(world_size_y)]
-world_data = [[[9,9,10,9] if random.randint(0,10) == 4 else 0 for x in range(world_size_x)] for y in range(world_size_y)]
+world_data = [[[2,2,2,2] if random.randint(0,10) == 4 else 0 for x in range(world_size_x)] for y in range(world_size_y)]
 #world_data = [[0 for x in range(world_size_x)] for y in range(world_size_y)]
 
 entities = [(random.randint(0,world_size_x*tile_size_x),random.randint(0,world_size_y*tile_size_y), random.randint(0,1), random.randint(0,359)) for i in range(25)]
-#entities = [(100,100,1,90)]
+#entities = [(50,100,1,90),(50,200,1,90),(50,150,1,90)]
 
 depth_list = []
 
@@ -301,7 +301,7 @@ while True:
             if not player_tile_x == world_size_x-1:
                 if not world_data[player_tile_y][player_tile_x+1] == 0 and player_local_tile_pos_x > tile_size_x-player_size:
                     player_x -= (player_size-(tile_size_x-player_local_tile_pos_x))
-    print("no")
+
     # Limits the player's selection to the avalable tiles
     for i in range(4):
         if tile_select[i] > 10:
@@ -468,11 +468,11 @@ while True:
             if line_height/64 < 200 and line_height/64 > 0:
                 img = get_image(wall_image, slice_index+((tile[side])*64),0, 1, 64, 4, line_height/64, None)
 
-            # Darkens the north and south side of a wall
-            if side == 0 or side == 2:
-                img.fill((25,25,25),special_flags=pygame.BLEND_RGB_SUB)
+                # Darkens the north and south side of a wall
+                if side == 0 or side == 2:
+                    img.fill((25,25,25),special_flags=pygame.BLEND_RGB_SUB)
 
-            screen.blit(img, (i*4, window_half_y-(line_height/2)))
+                screen.blit(img, (i*4, window_half_y-(line_height/2)))
 
     
     """
@@ -482,6 +482,7 @@ while True:
     """
     inverse = 1/(plane_x*dir_y - dir_x * plane_y)
 
+    deleted_entities = []
     for entity in entities:
         relative_x = entity[0] - player_x
         relative_y = entity[1] - player_y
@@ -497,8 +498,13 @@ while True:
         #draw_start_y = (-entity_size/2 + window_size_y/2)//4
         #draw_end_y = (entity_size/2 + window_size_y/2)//4
 
-        draw_start_x = (-entity_size / 2 + screen_x) //4
-        draw_end_x = (entity_size / 2 + screen_x) //4
+        draw_start_x = (-entity_size/2 + screen_x) //4
+        draw_end_x = (entity_size/2 + screen_x) //4
+
+        # Adds entites to a list known as deleted_entites if the entity is within the shooting range of the player, isn't in front of a wall, and if the player actually shoots a bullet
+        if draw_start_x < window_half_x//4 and draw_end_x > window_half_x//4 and shoot == True:
+            if not depth_list[120] < transform_y:
+                deleted_entities.append(entity)
 
         angle = (entity[3] - math.degrees(math.atan2(dir_y,dir_x)))+22.5
 
@@ -512,6 +518,13 @@ while True:
                 if entity_size/64 < 200 and entity_size/64 > 0:
                     img = get_image(entity_image, (entity_texture_x*4)+(entity[2]*64),angle, 1, 64, 4, entity_size/64, None).convert_alpha()
                     screen.blit(img, ((i*4), window_half_y-((entity_size/2)*1)))
+            
+
+    # Sorts out deleted entities and deletes the one closest to the player
+    if len(deleted_entities) > 0 and shoot == True and a == 1:
+        deleted_entities.sort(reverse=False, key=lambda entity: math.sqrt((entity[0]-player_x)**2 + (entity[1]-player_y)**2))
+
+        entities.pop(entities.index(deleted_entities[0]))
 
     # Draws the player's firearm
     if player_equipped_gun == 1:
