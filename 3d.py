@@ -286,22 +286,22 @@ while True:
             # Checks if a player has hit the side of a block and fixes their position
             if not player_tile_y == 0:
                 if not world_data[player_tile_y-1][player_tile_x] == 0 and player_local_tile_pos_y < player_size:
-                    player_y = float(past_player_y)
+                    player_y += (player_size-player_local_tile_pos_y)
 
             if not player_tile_y == world_size_y-1:
                 if not world_data[player_tile_y+1][player_tile_x] == 0 and player_local_tile_pos_y > tile_size_y-player_size: 
-                    player_y = float(past_player_y)
+                    player_y -= (player_size-(tile_size_y-player_local_tile_pos_y))
         
 
             if not player_tile_x == 0:
                 if not world_data[player_tile_y][player_tile_x-1] == 0 and player_local_tile_pos_x < player_size:
-                    player_x = float(past_player_x)
+                    player_x += (player_size-player_local_tile_pos_x)
 
 
             if not player_tile_x == world_size_x-1:
                 if not world_data[player_tile_y][player_tile_x+1] == 0 and player_local_tile_pos_x > tile_size_x-player_size:
-                    player_x = float(past_player_x)
-
+                    player_x -= (player_size-(tile_size_x-player_local_tile_pos_x))
+    print("no")
     # Limits the player's selection to the avalable tiles
     for i in range(4):
         if tile_select[i] > 10:
