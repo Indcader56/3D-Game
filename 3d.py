@@ -54,6 +54,9 @@ dir_y = 0
 plane_x = 0
 plane_y = 1
 
+player_equipped_gun = 0
+shoot = False
+
 click_w = False
 click_s = False
 click_a = False
@@ -74,17 +77,19 @@ mouse_view = False
 hud = False
 
 #world_data = [[2 if x == 0 or x == world_size_x-1 or y == 0 or y == world_size_y-1 else 0 for x in range(world_size_x)] for y in range(world_size_y)]
-#world_data = [[[1,1,1,1] if random.randint(0,4) == 4 else 0 for x in range(world_size_x)] for y in range(world_size_y)]
-world_data = [[0 for x in range(world_size_x)] for y in range(world_size_y)]
+world_data = [[[9,9,10,9] if random.randint(0,10) == 4 else 0 for x in range(world_size_x)] for y in range(world_size_y)]
+#world_data = [[0 for x in range(world_size_x)] for y in range(world_size_y)]
 
-entities = [(random.randint(0,world_size_x*tile_size_x),random.randint(0,world_size_y*tile_size_y), random.randint(0,2), random.randint(0,359)) for i in range(25)]
-
+entities = [(random.randint(0,world_size_x*tile_size_x),random.randint(0,world_size_y*tile_size_y), random.randint(0,1), random.randint(0,359)) for i in range(25)]
+#entities = [(100,100,1,90)]
 
 depth_list = []
 
 wall_image = pygame.image.load("wall.png")
 
 entity_image = pygame.image.load("Stoic_guy.png")
+
+gun_images = [pygame.image.load("gun1.png"),pygame.image.load("gun2.png"),pygame.image.load("shotgun1.png"),pygame.image.load("shotgun2.png")]
 
 # Used for spritesheets and animation (Credits to Coding with Russ)
 def get_image(sheet, frame_x, frame_y, width, height, scale_x, scale_y, color):
@@ -99,6 +104,7 @@ tile_selection = []
 for i in range(11):
     tile_selection.append(get_image(wall_image, i,0, 64,64,1,1, None))
 
+a = 0
 while True:
     dt = clock.tick(60)/1000
 
@@ -130,19 +136,28 @@ while True:
             if event.key == pygame.K_RIGHT:
                 click_right = True
 
-            if event.key == pygame.K_1:
-                tile_select[0] += 1
-            if event.key == pygame.K_2:
-                tile_select[1] += 1
-            if event.key == pygame.K_3:
-                tile_select[2] += 1
-            if event.key == pygame.K_4:
-                tile_select[3] += 1
-            if event.key == pygame.K_SPACE:
-                if delete == 0:
-                    delete = 1
-                else:
-                    delete = 0
+            if hud == True:
+                if event.key == pygame.K_1:
+                    tile_select[0] += 1
+                if event.key == pygame.K_2:
+                    tile_select[1] += 1
+                if event.key == pygame.K_3:
+                    tile_select[2] += 1
+                if event.key == pygame.K_4:
+                    tile_select[3] += 1
+                if event.key == pygame.K_SPACE:
+                    if delete == 0:
+                        delete = 1
+                    else:
+                        delete = 0
+            else:
+                if event.key == pygame.K_1:
+                    player_equipped_gun = 0
+                if event.key == pygame.K_2:
+                    player_equipped_gun = 1
+                if event.key == pygame.K_3:
+                    player_equipped_gun = 2
+
 
             if event.key == pygame.K_h:
                 if hud ==  True:
@@ -171,6 +186,7 @@ while True:
                     mouse_view = False
             elif hud == False:
                 mouse_view = False
+                shoot = True
     
 
         if hud == True:
@@ -213,22 +229,6 @@ while True:
         player_x -= dir_y*(player_speed*dt)
         player_y += dir_x*(player_speed*dt)
 
-    """
-    if click_left == True:
-        delta_mouse_x = pygame.mouse.get_rel()[0]
-        dir_x = math.cos(math.radians(-2))*temp_dir_x - math.sin(math.radians(-2))*temp_dir_y
-        dir_y = math.sin(math.radians(-2))*temp_dir_x + math.cos(math.radians(-2))*temp_dir_y
-
-        plane_x = math.cos(math.radians(-2))*temp_plane_x - math.sin(math.radians(-2))*temp_plane_y
-        plane_y = math.sin(math.radians(-2))*temp_plane_x + math.cos(math.radians(-2))*temp_plane_y
-
-    if click_right == True:
-        dir_x = math.cos(math.radians(2))*temp_dir_x - math.sin(math.radians(2))*temp_dir_y
-        dir_y = math.sin(math.radians(2))*temp_dir_x + math.cos(math.radians(2))*temp_dir_y
-
-        plane_x = math.cos(math.radians(2))*temp_plane_x - math.sin(math.radians(2))*temp_plane_y
-        plane_y = math.sin(math.radians(2))*temp_plane_x + math.cos(math.radians(2))*temp_plane_y
-    """
     if mouse_view == False:
         delta_mouse_x = pygame.mouse.get_rel()[0]
         final_mouse_change = delta_mouse_x*mouse_sensitivity
@@ -249,6 +249,18 @@ while True:
                     world_data[mouse_block_y][mouse_block_x] = list(tile_select)
                 else:
                     world_data[mouse_block_y][mouse_block_x] = 0
+
+    # Keeps the gun image on the shooting image until a certain number of frames have passed
+    if shoot == True:
+        a += 1
+        if player_equipped_gun == 1:
+            if a > 10:
+                a = 0
+                shoot = False
+        elif player_equipped_gun == 2:
+            if a > 15:
+                a = 0
+                shoot = False
  
 
 # Player collsion 
@@ -277,12 +289,14 @@ while True:
                     player_y = float(past_player_y)
 
             if not player_tile_y == world_size_y-1:
-                if not world_data[player_tile_y+1][player_tile_x] == 0 and player_local_tile_pos_y > tile_size_y-player_size:
+                if not world_data[player_tile_y+1][player_tile_x] == 0 and player_local_tile_pos_y > tile_size_y-player_size: 
                     player_y = float(past_player_y)
+        
 
             if not player_tile_x == 0:
                 if not world_data[player_tile_y][player_tile_x-1] == 0 and player_local_tile_pos_x < player_size:
                     player_x = float(past_player_x)
+
 
             if not player_tile_x == world_size_x-1:
                 if not world_data[player_tile_y][player_tile_x+1] == 0 and player_local_tile_pos_x > tile_size_x-player_size:
@@ -294,6 +308,7 @@ while True:
             tile_select[i] = 1
         if tile_select[i] < 1:
             tile_select[i] = 10
+
 
     
     screen.fill((0,0,0))
@@ -485,17 +500,33 @@ while True:
         draw_start_x = (-entity_size / 2 + screen_x) //4
         draw_end_x = (entity_size / 2 + screen_x) //4
 
+        angle = (entity[3] - math.degrees(math.atan2(dir_y,dir_x)))+22.5
+
+        angle = (angle//45) % 8
 
         for i in range(int(draw_start_x), int(draw_end_x), 1):
 
             entity_texture_x = int(256 * (i - draw_start_x) * texture_size_x / entity_size) / 256
-
+            
             if transform_y > 0 and i >= 0 and i < window_size_x//4 and not depth_list[i] < transform_y:
                 if entity_size/64 < 200 and entity_size/64 > 0:
-                    img = get_image(entity_image, (entity_texture_x*4)+(entity[2]*64),0, 1, 64, 4, entity_size/64, None).convert_alpha()
+                    img = get_image(entity_image, (entity_texture_x*4)+(entity[2]*64),angle, 1, 64, 4, entity_size/64, None).convert_alpha()
                     screen.blit(img, ((i*4), window_half_y-((entity_size/2)*1)))
-                
 
+    # Draws the player's firearm
+    if player_equipped_gun == 1:
+        if shoot == True:
+            gun = gun_images[1]
+        else:
+            gun = gun_images[0]
+    elif player_equipped_gun == 2:
+        if shoot == True:
+            gun = gun_images[3]
+        else:
+            gun = gun_images[2]
+
+    if player_equipped_gun != 0:
+        screen.blit(gun, (window_half_x-(gun.get_width()/2),window_size_y-(gun.get_height())))
 
     # Draws the map if the hud is enabled
     if hud == True:
@@ -510,6 +541,8 @@ while True:
 
         for entity in entities:
              pygame.draw.circle(screen, player_color, ((entity[0]+window_half_x)-player_x, (entity[1]+window_half_y)-player_y), 2)
+             pygame.draw.line(screen, player_color, ((entity[0]+window_half_x)-player_x,(entity[1]+window_half_y)-player_y), ((math.cos(math.radians(entity[3]))*20)+((entity[0]+window_half_x)-player_x),((entity[1]+window_half_y)-player_y)+(math.sin(math.radians(entity[3]))*20)))
+
         """
         for circle in circles:
             pygame.draw.circle(screen, player_color, (circle[0]+window_half_x, circle[1]+window_half_y), 1)
@@ -522,5 +555,5 @@ while True:
 
         for index, tile in enumerate(tile_select):
             screen.blit(tile_selection[tile_select[index]], (index*texture_size_x,0,tile_size_x,tile_size_y))
-  
+    
     pygame.display.flip()
